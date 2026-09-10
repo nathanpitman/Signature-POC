@@ -30,10 +30,16 @@ Signature content is served from Cloudflare Pages, meaning it can be updated wit
 
 ## Requirements
 
-- Outlook for Mac (2023 or later)
-- Microsoft 365 account signed into Outlook
+This add-in relies on Outlook's [event-based activation](https://learn.microsoft.com/office/dev/add-ins/develop/event-based-activation) feature (`OnNewMessageCompose`, Mailbox requirement set 1.10), not on Outlook for Mac specifically. Per Microsoft's [supported-clients table](https://learn.microsoft.com/office/dev/add-ins/develop/event-based-activation#supported-events), that means:
+
+- **Windows** — both the new Outlook for Windows and classic Outlook for Windows support it (classic requires Windows 10 version 1903 / Build 18362 or later, or Windows Server 2019 version 1903+)
+- **Mac** — only the **new Outlook for Mac**. Legacy/classic Outlook for Mac does not support event-based activation at all, so the add-in will not fire on it
+- **Outlook on the web** also supports it
+- A Microsoft 365 account signed into Outlook (event-based activation isn't available on POP/IMAP accounts)
 - A [Cloudflare Pages](https://pages.cloudflare.com) account (free tier)
 - A GitHub account
+
+**Known gap on classic Outlook for Windows**: `commands.js` currently uses `async`/`await`. Classic Outlook for Windows builds older than Version 2403 (Build 17425.20000) run event handlers in a JS runtime limited to ES2016, which doesn't support `async`/`await` — the handler will time out and the signature won't be injected. Newer classic builds (2403+), the new Outlook for Windows, and Outlook on the web are unaffected. If you need to support older classic Windows builds, rewrite the handler using `.then()`/callback chains instead of `async`/`await` (a version of this exists in this repo's history at commit `a5aaf97`, later reverted).
 
 -----
 
@@ -85,12 +91,14 @@ const SIGNATURE_URL = "https://YOUR_PROJECT_NAME.pages.dev/signature.html";
 
 Push the changes — Cloudflare Pages will redeploy automatically.
 
-### 5. Sideload in Outlook for Mac
+### 5. Sideload the add-in
 
-1. Open Outlook
+1. Open Outlook (new Outlook for Mac, or Outlook on Windows/web — see [Requirements](#requirements))
 1. **Insert → Add-ins → My Add-ins → ··· → Add a Custom Add-in → Add from File…**
 1. Select your local `manifest.xml`
 1. Open a new compose window — the signature will appear automatically
+
+The menu path above is the same across new Outlook for Mac, Outlook on Windows, and Outlook on the web. On legacy/classic Outlook for Mac, event-based activation isn't supported, so this add-in won't fire there regardless of sideloading.
 
 -----
 
@@ -115,7 +123,11 @@ Edit `signature.html` and push to `main`. Cloudflare Pages redeploys in seconds.
 
 **`setSignatureAsync` has no effect**
 
-- Outlook respects the user’s native signature settings — if a default signature is already configured in Outlook preferences, the API will not overwrite it. Remove the native signature under **Outlook → Preferences → Signatures** and try again.
+- Outlook respects the user’s native signature settings — if a default signature is already configured in Outlook preferences, the API will not overwrite it. Remove the native signature under **Outlook → Preferences → Signatures** (Mac) or **File → Options → Mail → Signatures** (Windows) and try again.
+
+**Add-in installs but signature never appears on Outlook for Windows**
+
+- If this is classic (not new) Outlook for Windows, check **Help → About Outlook** for the build number. Builds older than Version 2403 (Build 17425.20000) can't run the `async`/`await` code in `commands.js` and will silently time out — see [Requirements](#requirements)
 
 **Manifest rejected silently by Outlook**
 
