@@ -10,8 +10,14 @@
 //   5. event.completed() signals Outlook the handler is done
 //
 // REQUIREMENTS:
-//   - Outlook for Mac with a Microsoft 365 account
-//   - Outlook version that supports event-based add-ins (2023+)
+//   - A Microsoft 365 account signed into Outlook
+//   - An Outlook client that supports event-based activation (Mailbox
+//     requirement set 1.10): new Outlook for Mac, new or classic Outlook
+//     for Windows, or Outlook on the web. Legacy/classic Outlook for Mac
+//     is NOT supported. See readme.md for the full compatibility matrix.
+//   - NOTE: this file's use of async/await will time out on classic
+//     Outlook for Windows builds older than Version 2403 (Build
+//     17425.20000) — that runtime is limited to ES2016. See readme.md.
 //   - The signature URL must be HTTPS and CORS-accessible
 
 Office.onReady();
